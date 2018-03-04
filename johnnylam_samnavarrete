@@ -1,18 +1,17 @@
-package myrobot;
+package johnnylam_samnav;
 import robocode.*;
 import robocode.util.Utils;
 import java.awt.Color;
 import java.awt.geom.*;
 /**
- * C9Robot - a robot by (your name here)
+ * Cloud - a robot by (Sam Navarrete & Johnny Lam)
  */
-public class C9Robot extends AdvancedRobot
+public class Cloud9 extends AdvancedRobot
 {		
 	private String targ; // what robot to target because they shot at us
 	boolean movingForward;
 	static double oldEnemyHeading;
-	static double prevEnergy = 100.0;
-					
+	static double prevEnergy = 100.0;		
 	static double xForce;
 	static double yForce;
 	static double lastDistance;
@@ -29,12 +28,12 @@ public class C9Robot extends AdvancedRobot
 		turnRight(75);
 		ahead(80);
 		// Robot main loop
-		while(true) {
-				
+		while(true) {	
 		turnRadarRightRadians(Double.POSITIVE_INFINITY);
 		ahead(200);
 		turnRadarRightRadians(Double.POSITIVE_INFINITY);
 		back(200);
+		
 		}
 	}
 
@@ -42,7 +41,16 @@ public class C9Robot extends AdvancedRobot
 	 * onScannedRobot: What to do when you see another robot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
+	//stop and go
+	//energy monitoring so if  they fire, we stop, and if they don't we move
 	double direction = 1;
+ 	if(getDistanceRemaining()==0.0 && prevEnergy-e.getEnergy()>0.0){
+    setAhead(45*direction);
+  	}
+	prevEnergy = e.getEnergy();
+	//turn car perpendicular so we can start strafing 
+	setTurnRight(e.getBearing() + 90);
+
 	//circular prediction
 	double bulletPower = Math.min(3.0,getEnergy());
 	double myX = getX();
@@ -78,16 +86,13 @@ public class C9Robot extends AdvancedRobot
 	}
 	double theta = Utils.normalAbsoluteAngle(Math.atan2(
 	    predictedX - getX(), predictedY - getY()));
-setTurnRadarRightRadians(Utils.normalRelativeAngle(
+		
+	setTurnRadarRightRadians(Utils.normalRelativeAngle(
     absoluteBearing - getRadarHeadingRadians()));
-setTurnGunRightRadians(Utils.normalRelativeAngle(
+	setTurnGunRightRadians(Utils.normalRelativeAngle(
     theta - getGunHeadingRadians()));
-	//stop and go
-	//energy monitoring
-  if(getDistanceRemaining()==0.0 && prevEnergy-e.getEnergy()>0.0){
-    setAhead(36*direction);
-  }
-  prevEnergy = e.getEnergy();
+
+  
 	if(targ == null){
 	targ= e.getName();
 	}
@@ -125,7 +130,7 @@ setTurnGunRightRadians(Utils.normalRelativeAngle(
 			back(100);
 			movingForward = false;
 		} else {	
-			setAhead(100);
+			ahead(100);
 			movingForward = true;
 		}
 	}	
