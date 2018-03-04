@@ -2,21 +2,22 @@ package johnnylam_samnav;
 import robocode.*;
 import robocode.util.Utils;
 import java.awt.Color;
-import java.awt.geom.*;
+import java.awt.geom.*; 
 /**
  * Cloud - a robot by (Sam Navarrete & Johnny Lam)
+ * STRONG 1V1, TERRIBLE AT MELEE
+ * heading - absolute angle in degrees with 0 facing up the screen, positive clockwise. 0 <= heading < 360. 
+ * bearing - relative angle to some object from your robot's heading, positive clockwise. -180 < bearing <= 180 
  */
 public class Cloud9 extends AdvancedRobot
 {		
 	boolean movingForward;
-	static double oldEnemyHeading;
+	static double oldEnemyHeading; //keep static so we can keep track each scan
 	static double prevEnergy = 100.0;		
-	static double xForce;
-	static double yForce;
-	static double lastDistance;
-	
+	static int stuck;// if get caught in a corner nonstop, gets out after 5 hits(should work
 	/**
-	 * run: C9Robot's default behavior
+	 * run: Cloud9's default behavior
+	 * Cloud9 movement acts like a timer that swings far and rewinds step by step back & repeats
 	 */
 
 	public void run() {
@@ -29,9 +30,10 @@ public class Cloud9 extends AdvancedRobot
 		ahead(80);
 		// Robot main loop
 		while(true) {	
-		ahead(200);
+		ahead(150); //set high 150 & 300 for more mobility
 		turnRadarRightRadians(Double.POSITIVE_INFINITY);
-		back(200);
+		back(300);
+		turnRadarRightRadians(Double.POSITIVE_INFINITY);
 		}
 	}
 
@@ -40,7 +42,7 @@ public class Cloud9 extends AdvancedRobot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
 
-	//stop and go
+	//typical stop and go, from wiki******
 	//energy monitoring so if  they fire, we stop, and if they don't we move
 
  	if(getDistanceRemaining()==0.0 && prevEnergy-e.getEnergy()>0.0){
@@ -49,42 +51,56 @@ public class Cloud9 extends AdvancedRobot
 	prevEnergy = e.getEnergy();
 	//turn car perpendicular so we can start strafing 
 	setTurnRight(e.getBearing() + 90);
-
+	
 	//circular prediction
+	//bulletpower pick either 3 or what the energy is
 	double bulletPower = Math.min(3.0,getEnergy());
+	//get coordinates
 	double myX = getX();
 	double myY = getY();
+	//enemy last seen location
 	double absoluteBearing = getHeadingRadians() + e.getBearingRadians();
+
+	//get enemy's cartesian coordinates
 	double enemyX = getX() + e.getDistance() * Math.sin(absoluteBearing);
 	double enemyY = getY() + e.getDistance() * Math.cos(absoluteBearing);
+	//enemy heading
 	double enemyHeading = e.getHeadingRadians();
 	double enemyHeadingChange = enemyHeading - oldEnemyHeading;
-	double enemyVelocity = e.getVelocity();
+	//update oldEnemyHeading from last scan
 	oldEnemyHeading = enemyHeading;
-	 
+	double enemyVelocity = e.getVelocity();
+	
 	double deltaTime = 0;
 	double battleFieldHeight = getBattleFieldHeight(), 
 	       battleFieldWidth = getBattleFieldWidth();
+	// assign predictedX/Y from enemy coordinates
 	double predictedX = enemyX, predictedY = enemyY;
-	while((++deltaTime) * (20.0 - 3.0 * bulletPower) < 
-	      Point2D.Double.distance(myX, myY, predictedX, predictedY)){		
+	//point2d.distance is use to calcualte the distance between two coordinates
+	//taken from wiki*** about circular targetting which can also work w/ linear, 
+	//formula to predict 
+	while((++deltaTime) * (20.0 - 3.0 * bulletPower) < Point2D.Double.distance(myX, myY, predictedX, predictedY)){		
+		//predicts position by calculating velocity vector and update coordinate
 		predictedX += Math.sin(enemyHeading) * enemyVelocity;
 		predictedY += Math.cos(enemyHeading) * enemyVelocity;
 		enemyHeading += enemyHeadingChange;
+		
 		if(	predictedX < 18.0 || predictedY < 18.0 || predictedX > battleFieldWidth - 18.0 || predictedY > battleFieldHeight - 18.0){
 			predictedX = Math.min(Math.max(18.0, predictedX), 
 			    battleFieldWidth - 18.0);	
 			predictedY = Math.min(Math.max(18.0, predictedY), 
 			    battleFieldHeight - 18.0);
 			break;
+			}
+		
 		}
-	}
-	double theta = Utils.normalAbsoluteAngle(Math.atan2(
-	    predictedX - getX(), predictedY - getY()));
-	setTurnGunRightRadians(Utils.normalRelativeAngle(theta - getGunHeadingRadians()));
+	double degree = Utils.normalAbsoluteAngle(Math.atan2(predictedX - getX(), predictedY - getY()));
+	
+	//turn gun and radar
+	//gun uses head on targetting
+	setTurnGunRightRadians(Utils.normalRelativeAngle(degree - getGunHeadingRadians()));
 	setTurnRadarRightRadians(Utils.normalRelativeAngle( absoluteBearing - getRadarHeadingRadians()));
-
-
+	
 		if(e.getDistance() < 200){ // the the enemy is further than 200p
 		        setFire(3); // fire full power
 				}
@@ -95,28 +111,27 @@ public class Cloud9 extends AdvancedRobot
 				setFire(2); // else fire 2 SPRAY & PRAY
 		}
 	
-}
-	/**
-	 * onHitByBullet: What to do when you're hit by a bullet
-	 */
-	public void onHitByBullet(HitByBulletEvent e) {
-	  
 	}
-	
+
 	/**
 	 * onHitWall: What to do when you hit a wall
 	 */
 	public void onHitWall(HitWallEvent e) {
+	  
 		reverseDirection(); // bounces off when we hit wall
+		stuck++;
+		if(stuck > 5){
+			turnRight(45); // get us out of trapped corner
+		}
 	}
 	public void reverseDirection() {
 		if (movingForward) {
-			back(100);
 			
+			back(150); //swing us back
 			movingForward = false;	
 		} else {	
-			ahead(100);
 			
+			ahead(150); //swing us forward for more room to strafe
 			movingForward = true;
 		}
 	}	
