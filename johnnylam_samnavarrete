@@ -14,7 +14,8 @@ public class Cloud9 extends AdvancedRobot
 	boolean movingForward;
 	static double oldEnemyHeading; //keep static so we can keep track each scan
 	static double prevEnergy = 100.0;		
-	static int stuck;// if get caught in a corner nonstop, gets out after 5 hits(should work
+	static double wallhitOne=0.0, wallhitTwo=0.0;
+	
 	/**
 	 * run: Cloud9's default behavior
 	 * Cloud9 movement acts like a timer that swings far and rewinds step by step back & repeats
@@ -91,7 +92,6 @@ public class Cloud9 extends AdvancedRobot
 			    battleFieldHeight - 18.0);
 			break;
 			}
-		
 		}
 	double degree = Utils.normalAbsoluteAngle(Math.atan2(predictedX - getX(), predictedY - getY()));
 	
@@ -109,30 +109,50 @@ public class Cloud9 extends AdvancedRobot
 		else{
 				setFire(2); // else fire 2 SPRAY & PRAY
 		}
-	
 	}
 
 	/**
 	 * onHitWall: What to do when you hit a wall
+	 * I found that sometimes it strafes back and forth in the corner with limited mobility so this should open up the mobility
 	 */
 	public void onHitWall(HitWallEvent e) {
-	  
-		reverseDirection(); // bounces off when we hit wall
-		stuck++;
-		if(stuck > 5){
-			turnRight(45); // get us out of trapped corner
-		}
+		if (wallhitOne==0)
+			wallhitOne=getX();
+		else if (wallhitOne!=0)
+			wallhitTwo=getX();
+		
+		if ((Math.abs(wallhitOne-wallhitTwo)<100))
+			turnRight(30);
 	}
+	
 	public void reverseDirection() {
 		if (movingForward) {
-			
 			back(150); //swing us back
 			movingForward = false;	
 		} else {	
-			
 			ahead(150); //swing us forward for more room to strafe
 			movingForward = true;
 		}
 	}	
+	
+	//this should protect Cloud9 from getting targeted while fighting another bot
+	public void onHitByBullet(HitByBulletEvent e) {
+		resetPosition();
+		ahead(100);
+	}
+	
+	public void onHitRobot(HitRobotEvent e) {
+		if(e.getBearing()>-90 && e.getBearing()<=90){
+			setBack(100);
+			resetPosition();
+		} else {
+			setAhead(100);
+			resetPosition();
+		}	
+	}
 
-}
+	public void resetPosition(){
+		turnRight(90);
+		turnRadarRight(360);
+	}
+}// class
