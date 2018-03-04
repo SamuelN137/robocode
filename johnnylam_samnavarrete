@@ -26,11 +26,10 @@ public class Cloud9 extends AdvancedRobot
 		setAdjustGunForRobotTurn(true);
 		setAdjustRadarForGunTurn(true);
 		setColors(Color.cyan,Color.blue,Color.green); // body,gun,radar
-		turnRight(75);
-		ahead(80);
+
 		// Robot main loop
 		while(true) {	
-		ahead(150); //set high 150 & 300 for more mobility
+		ahead(50); //50 & 300 for more mobility
 		turnRadarRightRadians(Double.POSITIVE_INFINITY);
 		back(300);
 		turnRadarRightRadians(Double.POSITIVE_INFINITY);
