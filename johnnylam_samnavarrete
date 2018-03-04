@@ -8,20 +8,20 @@ import java.awt.geom.*;
  */
 public class Cloud9 extends AdvancedRobot
 {		
-	private String targ; // what robot to target because they shot at us
 	boolean movingForward;
 	static double oldEnemyHeading;
 	static double prevEnergy = 100.0;		
 	static double xForce;
 	static double yForce;
 	static double lastDistance;
+	
 	/**
 	 * run: C9Robot's default behavior
 	 */
 
 	public void run() {
 		// Initialization of the robot should be put here
-	 
+
 		setAdjustGunForRobotTurn(true);
 		setAdjustRadarForGunTurn(true);
 		setColors(Color.cyan,Color.blue,Color.green); // body,gun,radar
@@ -29,11 +29,9 @@ public class Cloud9 extends AdvancedRobot
 		ahead(80);
 		// Robot main loop
 		while(true) {	
-		turnRadarRightRadians(Double.POSITIVE_INFINITY);
 		ahead(200);
 		turnRadarRightRadians(Double.POSITIVE_INFINITY);
 		back(200);
-		
 		}
 	}
 
@@ -41,11 +39,12 @@ public class Cloud9 extends AdvancedRobot
 	 * onScannedRobot: What to do when you see another robot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
+
 	//stop and go
 	//energy monitoring so if  they fire, we stop, and if they don't we move
-	double direction = 1;
+
  	if(getDistanceRemaining()==0.0 && prevEnergy-e.getEnergy()>0.0){
-    setAhead(45*direction);
+    setAhead(45);
   	}
 	prevEnergy = e.getEnergy();
 	//turn car perpendicular so we can start strafing 
@@ -72,11 +71,7 @@ public class Cloud9 extends AdvancedRobot
 		predictedX += Math.sin(enemyHeading) * enemyVelocity;
 		predictedY += Math.cos(enemyHeading) * enemyVelocity;
 		enemyHeading += enemyHeadingChange;
-		if(	predictedX < 18.0 
-			|| predictedY < 18.0
-			|| predictedX > battleFieldWidth - 18.0
-			|| predictedY > battleFieldHeight - 18.0){
-	 
+		if(	predictedX < 18.0 || predictedY < 18.0 || predictedX > battleFieldWidth - 18.0 || predictedY > battleFieldHeight - 18.0){
 			predictedX = Math.min(Math.max(18.0, predictedX), 
 			    battleFieldWidth - 18.0);	
 			predictedY = Math.min(Math.max(18.0, predictedY), 
@@ -86,51 +81,42 @@ public class Cloud9 extends AdvancedRobot
 	}
 	double theta = Utils.normalAbsoluteAngle(Math.atan2(
 	    predictedX - getX(), predictedY - getY()));
-		
-	setTurnRadarRightRadians(Utils.normalRelativeAngle(
-    absoluteBearing - getRadarHeadingRadians()));
-	setTurnGunRightRadians(Utils.normalRelativeAngle(
-    theta - getGunHeadingRadians()));
+	setTurnGunRightRadians(Utils.normalRelativeAngle(theta - getGunHeadingRadians()));
+	setTurnRadarRightRadians(Utils.normalRelativeAngle( absoluteBearing - getRadarHeadingRadians()));
 
-  
-	if(targ == null){
-	targ= e.getName();
-	}
-	if(e.getDistance() > 300){
-	targ=e.getName();
-	}
-	if(e.getDistance() < 200){ // the the enemy is further than 200p
-	        setFire(3); // fire full power
-			}
- 	else if(e.getDistance() < 400){
-	        setFire(2.7); // else fire 2
-			}
-	else{
-			setFire(1.5); // else fire 1 SPRAY & PRAY
+
+		if(e.getDistance() < 200){ // the the enemy is further than 200p
+		        setFire(3); // fire full power
+				}
+	 	else if(e.getDistance() < 400){
+		        setFire(2.7); // else fire 2
+				}
+		else{
+				setFire(2); // else fire 2 SPRAY & PRAY
 		}
-
 	
 }
 	/**
 	 * onHitByBullet: What to do when you're hit by a bullet
 	 */
 	public void onHitByBullet(HitByBulletEvent e) {
-		targ = e.getName();// acquire target last hit us
+	  
 	}
 	
 	/**
 	 * onHitWall: What to do when you hit a wall
 	 */
 	public void onHitWall(HitWallEvent e) {
-		
 		reverseDirection(); // bounces off when we hit wall
 	}
 	public void reverseDirection() {
 		if (movingForward) {
 			back(100);
-			movingForward = false;
+			
+			movingForward = false;	
 		} else {	
 			ahead(100);
+			
 			movingForward = true;
 		}
 	}	
